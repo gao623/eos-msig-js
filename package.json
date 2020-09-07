@@ -1,0 +1,27 @@
+{
+  "name": "eos-msig",
+  "version": "0.0.1",
+  "keywords": [
+    "eos",
+    "msig",
+    "multisig",
+    "eosio.msig"
+  ],
+  "description": "JavaScript SDK for EOS multi signature",
+  "author": "iwan.wanchain.org <techsupport@wanchain.org> (https://iwan.wanchain.org)",
+  "license": "ISC",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --timeout 600000 test/autoTestCases.js -c"
+  },
+  "dependencies": {
+    "bytebuffer": "^5.0.1",
+    "eosjs": "^21.0.3",
+    "node-fetch": "^2.6.0",
+    "promisefy-util": "^1.2.0"
+  }
+}
