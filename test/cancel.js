@@ -1,30 +1,12 @@
 const pu = require('promisefy-util');
+const keosdjs = require("keosdjs");
 
 const msig = require("../index");
 const util = require("../src/util");
 
-// global.keosdUrl = "http://192.168.1.58:9999";
-global.keosdUrl = "http://192.168.47.159:9999";
-
-const keosd = require("./keosdjs/keosd");
-
-// async function getHistoryAction(client, contract, actName, proposer, pos, offset) {
-//   let historyActions = await client.rpc.history_get_actions(contract, pos, offset);
-//   let last_irreversible_block = historyActions.last_irreversible_block;
-//   let filter = currAction => (currAction.action_trace && currAction.block_num <= last_irreversible_block
-//       && (actName === currAction.action_trace.act.name) && (currAction.action_trace.act.data.proposer === proposer))
-//     || (currAction.act && action.block_num <= last_irreversible_block && (actName === currAction.act.name)
-//       && (currAction.act.data.proposer === proposer));
-
-//   let theActions = historyActions.actions.filter(filter);
-//   console.log("getHistoryAction 1", JSON.stringify(theActions));
-//   theActions = historyActions.actions.filter(currAction => {
-//     let trace = currAction.action_trace || currAction;
-//     return currAction.block_num <= last_irreversible_block && trace && (actName === trace.act.name) && (trace.act.data.proposer === proposer);
-//   });
-//   console.log("getHistoryAction 2", JSON.stringify(theActions));
-//   return theActions;
-// }
+const keosd = new keosdjs({
+  endpoint:"http://192.168.47.159:9999"
+});
 
 async function test(wallet, url, msigAccountPerm, proposer, proposalName, senderPerm) {
   let client = util.newClient(url, wallet.privateKeys);
@@ -48,7 +30,7 @@ async function test(wallet, url, msigAccountPerm, proposer, proposalName, sender
     let isUnlock = await pu.promisefy(keosd.unlock, [wallet.name, wallet.passwd], keosd);
     console.log("unlock wallet", wallet.name, isUnlock);
 
-    let pubKeys = await pu.promisefy(keosd.get_public_keys);
+    let pubKeys = await pu.promisefy(keosd.get_public_keys, [], keosd);
     console.log("public keys", pubKeys);
     let cancelTx = await msig.rawTrans.createCancelTrans(client, proposer, proposalName, senderPerm);
     let cancelJSONTx = await client.deserializeTransaction(cancelTx.serializedTransaction);
@@ -60,7 +42,7 @@ async function test(wallet, url, msigAccountPerm, proposer, proposalName, sender
     let info = await client.rpc.get_info();
     let chainId = info.chain_id;
 
-    let signTrans = await pu.promisefy(keosd.sign_transaction, [cancelJSONTx, requireKeys, chainId]);
+    let signTrans = await pu.promisefy(keosd.sign_transaction, [cancelJSONTx, requireKeys, chainId], keosd);
 
     signedTx = {};
     signedTx.signatures = signTrans.signatures;

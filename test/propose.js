@@ -1,12 +1,12 @@
 const pu = require('promisefy-util');
+const keosdjs = require("keosdjs");
 
 const msig = require("../index");
 const util = require("../src/util");
 
-// global.keosdUrl = "http://192.168.1.58:9999";
-global.keosdUrl = "http://192.168.47.159:9999";
-
-const keosd = require("./keosdjs/keosd");
+const keosd = new keosdjs({
+  endpoint:"http://192.168.47.159:9999"
+});
 
 async function test(wallet, url, msigAccountPerm, proposalName, senderPerm) {
   let client = util.newClient(url, wallet.privateKeys);
@@ -31,8 +31,8 @@ async function test(wallet, url, msigAccountPerm, proposalName, senderPerm) {
     }]
   },
   {
-    blocksBehind: 3,
-    expireSeconds: 30,
+    blocksBehind: 30,
+    expireSeconds: 3000,
   });
   console.log("needMsigTx", needMsigTx);
   let needMsigJsonTx = await client.deserializeTransaction(needMsigTx.serializedTransaction);
@@ -56,7 +56,7 @@ async function test(wallet, url, msigAccountPerm, proposalName, senderPerm) {
     let isUnlock = await pu.promisefy(keosd.unlock, [wallet.name, wallet.passwd], keosd);
     console.log("unlock wallet", wallet.name, isUnlock);
 
-    let pubKeys = await pu.promisefy(keosd.get_public_keys);
+    let pubKeys = await pu.promisefy(keosd.get_public_keys, [], keosd);
     console.log("public keys", pubKeys);
     let proposeTx = await msig.rawTrans.createProposeTrans(client, proposalName, approveList, needMsigJsonTx, senderPerm);
     let proposeJSONTx = await client.deserializeTransaction(proposeTx.serializedTransaction);
@@ -68,7 +68,7 @@ async function test(wallet, url, msigAccountPerm, proposalName, senderPerm) {
     let info = await client.rpc.get_info();
     let chainId = info.chain_id;
 
-    let signTrans = await pu.promisefy(keosd.sign_transaction, [proposeJSONTx, requireKeys, chainId]);
+    let signTrans = await pu.promisefy(keosd.sign_transaction, [proposeJSONTx, requireKeys, chainId], keosd);
 
     signedTx = {};
     signedTx.signatures = signTrans.signatures;

@@ -23,5 +23,8 @@
     "eosjs": "^21.0.3",
     "node-fetch": "^2.6.0",
     "promisefy-util": "^1.2.0"
+  },
+  "devDependencies": {
+    "keosdjs": "https://github.com/gao623/keosdjs.git#master"
   }
 }

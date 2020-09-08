@@ -1,4 +1,5 @@
 const pu = require('promisefy-util');
+const keosdjs = require("keosdjs");
 
 const msig = require("../index");
 const util = require("../src/util");
@@ -6,11 +7,10 @@ const {
   eosio_msig
 } = require("../src/config");
 
-// global.keosdUrl = "http://192.168.1.58:9999";
-global.keosdUrl = "http://192.168.47.159:9999";
+const keosd = new keosdjs({
+  endpoint:"http://192.168.47.159:9999"
+});
 
-const keosd = require("./keosdjs/keosd");
-const { off } = require('process');
 
 async function getHistoryAction(client, contract, actName, proposer, pos, offset) {
   let historyActions = await client.rpc.history_get_actions(contract, pos, offset);
@@ -78,7 +78,7 @@ async function approve(wallet, url, msigAccountPerm, senderPerm) {
         let isUnlock = await pu.promisefy(keosd.unlock, [wallet.name, wallet.passwd], keosd);
         console.log("unlock wallet", wallet.name, isUnlock);
     
-        let pubKeys = await pu.promisefy(keosd.get_public_keys);
+        let pubKeys = await pu.promisefy(keosd.get_public_keys, [], keosd);
         console.log("public keys", pubKeys);
         let approveTx = await msig.rawTrans.createApproveTrans(client, data.proposer, data.proposal_name, null, senderPerm);
         let approveJSONTx = await client.deserializeTransaction(approveTx.serializedTransaction);
@@ -90,7 +90,7 @@ async function approve(wallet, url, msigAccountPerm, senderPerm) {
         let info = await client.rpc.get_info();
         let chainId = info.chain_id;
     
-        let signTrans = await pu.promisefy(keosd.sign_transaction, [approveJSONTx, requireKeys, chainId]);
+        let signTrans = await pu.promisefy(keosd.sign_transaction, [approveJSONTx, requireKeys, chainId], keosd);
     
         signedTx = {};
         signedTx.signatures = signTrans.signatures;

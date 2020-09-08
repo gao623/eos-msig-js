@@ -1,4 +1,5 @@
 const pu = require('promisefy-util');
+const keosdjs = require("keosdjs");
 
 const msig = require("../index");
 const util = require("../src/util");
@@ -6,10 +7,9 @@ const {
   eosio_msig
 } = require("../src/config");
 
-// global.keosdUrl = "http://192.168.1.58:9999";
-global.keosdUrl = "http://192.168.47.159:9999";
-
-const keosd = require("./keosdjs/keosd");
+const keosd = new keosdjs({
+  endpoint:"http://192.168.47.159:9999"
+});
 
 async function approve(wallet, url, msigAccountPerm, proposalName, senderPerm) {
   let client = util.newClient(url, wallet.privateKeys);
@@ -73,7 +73,7 @@ async function approve(wallet, url, msigAccountPerm, proposalName, senderPerm) {
         let isUnlock = await pu.promisefy(keosd.unlock, [wallet.name, wallet.passwd], keosd);
         console.log("unlock wallet", wallet.name, isUnlock);
     
-        let pubKeys = await pu.promisefy(keosd.get_public_keys);
+        let pubKeys = await pu.promisefy(keosd.get_public_keys, [], keosd);
         console.log("public keys", pubKeys);
         let approveTx = await msig.rawTrans.createApproveTrans(client, proposerRows.proposer, currProposer.proposal_name, null, senderPerm);
         let approveJSONTx = await client.deserializeTransaction(approveTx.serializedTransaction);
@@ -85,7 +85,7 @@ async function approve(wallet, url, msigAccountPerm, proposalName, senderPerm) {
         let info = await client.rpc.get_info();
         let chainId = info.chain_id;
     
-        let signTrans = await pu.promisefy(keosd.sign_transaction, [approveJSONTx, requireKeys, chainId]);
+        let signTrans = await pu.promisefy(keosd.sign_transaction, [approveJSONTx, requireKeys, chainId], keosd);
     
         signedTx = {};
         signedTx.signatures = signTrans.signatures;
@@ -108,23 +108,23 @@ async function test(wallet, url, msigAccountPerm, proposalName, senderPerms) {
 
 const node_url = "https://jungle3.cryptolions.io:443";
 
-// const wallet = {
-//   name:"multisig",
-//   // passwd:"PW5JARiVYiNV226pYhhG6ULs7UXU31UsFX1LjUWjKFWYQfkBDTDq8"// 58
-//   passwd:"PW5Jh1B6x2VaEEK3vEhN8igmAZeAZvdTAswYRch3ePTtWJiKady3K"
-// };
+const wallet = {
+  name:"multisig",
+  // passwd:"PW5JARiVYiNV226pYhhG6ULs7UXU31UsFX1LjUWjKFWYQfkBDTDq8"// 58
+  passwd:"PW5Jh1B6x2VaEEK3vEhN8igmAZeAZvdTAswYRch3ePTtWJiKady3K"
+};
 // const wallet = {
 //   privateKeys:process.env.EOS_KEYS
 // };
-const wallet = {
-  privateKeys:[
-    "5JpABcR3r1zwwGLUhZ6oykpZhoMRorUE9jCEErcLRHYVfY3Y4C6", // EOS89MiYBW3r2V5GJVbazsSyENZspV3t7fK82sNEN2DhgzmXVWx9x
-    "5JyyPpjBXYBRDz4g9wT3VFPvU9p9whyWSghEia1D5b7owgn47nP", // EOS5FtHtHZeHgnCugyxgsKMWDVXYoUbZFajMZX4SR45GABnwWfgng
-    "5JMrg3FpW8KHteh3amSvkm9k3dfvYyEhWqNe3MhR4bQFLZqQQ1C", // EOS6vZYjUbEYWp1fKMqGkeLCJhtaSfJ6k2sHkzEeYxBJE6aSWVAJ2
-    "5JU9uiA2r5cJtbvErWkKGvb77Y4xd6H5UfP5XhHGsBCk8wwaYCJ", // EOS6RKD7WaXD3oPpoj3ki1LqmhYYwVZfH7XkDXXwcKR1nTYKHZEcS
-    "5K1csZUYhnJtrDcGACXGP4dASFZVi8NjbjnXSaw3c8nxrToLPcy", // EOS6ztBxqYoZkC2qfqqukv3FVs3nBnaeswuoed1sHEF9sUzQu6v8p
-  ]
-};
+// const wallet = {
+//   privateKeys:[
+//     "5JpABcR3r1zwwGLUhZ6oykpZhoMRorUE9jCEErcLRHYVfY3Y4C6", // EOS89MiYBW3r2V5GJVbazsSyENZspV3t7fK82sNEN2DhgzmXVWx9x
+//     "5JyyPpjBXYBRDz4g9wT3VFPvU9p9whyWSghEia1D5b7owgn47nP", // EOS5FtHtHZeHgnCugyxgsKMWDVXYoUbZFajMZX4SR45GABnwWfgng
+//     "5JMrg3FpW8KHteh3amSvkm9k3dfvYyEhWqNe3MhR4bQFLZqQQ1C", // EOS6vZYjUbEYWp1fKMqGkeLCJhtaSfJ6k2sHkzEeYxBJE6aSWVAJ2
+//     "5JU9uiA2r5cJtbvErWkKGvb77Y4xd6H5UfP5XhHGsBCk8wwaYCJ", // EOS6RKD7WaXD3oPpoj3ki1LqmhYYwVZfH7XkDXXwcKR1nTYKHZEcS
+//     "5K1csZUYhnJtrDcGACXGP4dASFZVi8NjbjnXSaw3c8nxrToLPcy", // EOS6ztBxqYoZkC2qfqqukv3FVs3nBnaeswuoed1sHEF9sUzQu6v8p
+//   ]
+// };
 
 const senderPerms = [{
   actor: "3214ertyytre",
